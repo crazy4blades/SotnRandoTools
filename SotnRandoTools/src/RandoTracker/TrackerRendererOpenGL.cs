@@ -628,6 +628,8 @@ namespace SotnRandoTools.RandoTracker
 				SDL_SetWindowAlwaysOnTop(window, alwaysOnTop ? SDL_bool.SDL_TRUE : SDL_bool.SDL_FALSE);
 			}
 
+
+
 			bool changes = false;
 			for (int i = 0; i < tracker.relics.Length; i++)
 			{
