@@ -200,8 +200,33 @@ namespace SotnRandoTools.RandoTracker
 				{
 					continue;
 				}
-				//for recycler we dont do this on i == 3,11,15                                      CURRENT TASK 
+				if (tracker.CurrentPreset != null && tracker.CurrentPreset.ToLower().Contains("recycler")) {
+					if ( i == 3 || i == 11 || i == 15 || i == 18 || i == 19 || i == 22 || i == 23 || i == 24) // skip recycler slots
+					{
+							continue;
+					}
+				}
 				AddQuad(itemCount, i);
+				itemCount++;
+
+			}
+			if (tracker.CurrentPreset != null && tracker.CurrentPreset.ToLower().Contains("recycler"))
+			{
+				AddQuad(itemCount, 18);
+				itemCount++;
+				AddQuad(itemCount, 23);
+				itemCount++;
+				AddQuad(itemCount, 19);
+				itemCount++;
+				AddQuad(itemCount, 22);
+				itemCount++;
+				AddQuad(itemCount, 24);
+				itemCount++;
+				AddQuad(itemCount, 3);
+				itemCount++;
+				AddQuad(itemCount, 11);
+				itemCount++;
+				AddQuad(itemCount, 15);
 				itemCount++;
 			}
 			int remainder = itemCount % columns;
@@ -218,12 +243,6 @@ namespace SotnRandoTools.RandoTracker
 				AddQuad(itemCount, 25 + i);
 				itemCount++;
 			}
-			AddQuad(itemCount, 3);
-			itemCount++;
-			AddQuad(itemCount, 11);
-			itemCount++;
-			AddQuad(itemCount, 15);
-			itemCount++;
 			remainder = itemCount % columns;
 			if (remainder != 0)
 			{
