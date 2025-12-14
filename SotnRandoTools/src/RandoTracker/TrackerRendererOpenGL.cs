@@ -661,6 +661,7 @@ namespace SotnRandoTools.RandoTracker
 			{
 				case "magic-mirror":
 				case "mirror-breaker":
+				case "mobility":
 					return Paths.MirrorTexture;
 				case "spellbound":
 					return Paths.SpellboundTexture;
