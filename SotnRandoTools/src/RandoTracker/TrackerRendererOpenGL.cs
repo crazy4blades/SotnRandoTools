@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Numerics;
 using BizHawk.Common;
 using SDL2;
@@ -170,6 +171,7 @@ namespace SotnRandoTools.RandoTracker
 		private GL Gl;
 
 		public int[] recyclerSpriteIdOrder = { 0, 18, 1, 2, 4, 23, 5, 6, 7, 19, 8, 9, 10, 12, 13, 14, 16, 17, 20, 21, 22, 24, 98, 25, 26, 27, 28, 29, 3, 11, 15, 98, 30, 31, 32, 33, 34 };
+		public int[] bountySpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 23, 24, 98, 22, 21, 20, 19, 18, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34 };
 		public int[] VanillaSpriteIdOrder =  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34 };
 		public int EmptyCellCount = 0;
 
@@ -238,6 +240,44 @@ namespace SotnRandoTools.RandoTracker
 				goto RecyclerExitLabel;
 			}
 
+			if (tracker.CurrentPreset != null && new[] { "bounty-hunter", "hitman", "target-confirmed", "rampage", "chaos-lite" }.Any(p => tracker.CurrentPreset.ToLower().Contains(p)))
+
+			// Bounty Hunter Mode
+			{
+				for (int i = 0; i < bountySpriteIdOrder.Length ; i++)
+				{
+					if ((!grid && !tracker.relics[i].Collected) || (progression && !tracker.relics[i].Progression))
+					{
+						continue;
+					}
+
+					switch(bountySpriteIdOrder[i])
+					{
+						case 98:
+							// New Row
+							remainder = itemCount % columns;
+							if (remainder != 0)
+							{
+								itemCount += columns - remainder;
+								EmptyCellCount += columns - remainder;
+							}
+							break;
+						case 99:
+							// Empty
+							itemCount++;
+							EmptyCellCount++;
+							break;
+						default:
+							// Sprite
+							AddQuad(itemCount, bountySpriteIdOrder[i]);
+							itemCount++;
+							break;
+					}
+				}
+
+				goto BountyExitLabel;
+			}
+
 			// Normal Preset Relic Sprites
 			for (int i = 0; i < 25; i++)
 			{
@@ -294,6 +334,7 @@ namespace SotnRandoTools.RandoTracker
 			}
 
 		RecyclerExitLabel:
+		BountyExitLabel:
 
 			if (tracker.allBossesGoal)
 			{
@@ -680,6 +721,13 @@ namespace SotnRandoTools.RandoTracker
 				case "recycler-te":
 					OnResize();						// kind of hacky but works.
 					return Paths.RecyclerTexture;
+				case "bounty-hunter":
+				case "hitman":
+				case "target-confirmed":
+				case "rampage":
+				case "rampage-te":
+				case "chaos-lite":
+					return Paths.BountyTexture;
 				default:
 					return Paths.CombinedTexture; // fallback
 			}

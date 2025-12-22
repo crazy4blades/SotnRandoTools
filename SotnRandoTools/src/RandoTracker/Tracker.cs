@@ -23,7 +23,7 @@ namespace SotnRandoTools.RandoTracker
 	{
 		private const byte ReplayCooldown = 6;
 		private const string DefaultSeedInfo = "seed(preset)";
-		private const string DefaultComplexity = "Complexity(69)";
+		private const string DefaultComplexity = "[Extension] - Complexity(#)";
 		private const long DraculaEntityAddress = 0x076e98;
 		private const int AutosplitterReconnectCooldown = 120;
 		private readonly IToolConfig toolConfig;
@@ -861,7 +861,7 @@ namespace SotnRandoTools.RandoTracker
 
 			if (presetObj != null)
 			{
-				Complexity = $"Extension: {presetObj.Metadata.Extension} Complexity ({presetObj.Complexity.MinComplexity})";
+				Complexity = $"[{presetObj.Metadata.Extension}] - Complexity ({presetObj.Complexity.MinComplexity})";
 				SaveComplexityInfo(Complexity);
 			}
 			else

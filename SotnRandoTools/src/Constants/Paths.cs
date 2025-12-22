@@ -30,6 +30,7 @@
 		public const string MirrorTexture = "./ExternalTools/SotnRandoTools/Images/MirrorTexture.png";
 		public const string BeyondTexture = "./ExternalTools/SotnRandoTools/Images/beyondTexture.png";
 		public const string OracleTexture = "./ExternalTools/SotnRandoTools/Images/oracleTexture.png";
+		public const string BountyTexture = "./ExternalTools/SotnRandoTools/Images/bountyTexture.png";
 		public const string DogTexture = "./ExternalTools/SotnRandoTools/Images/dogTexture.png";
 		public const string TextboxImage = "./ExternalTools/SotnRandoTools/Images/SotnTextBox.png";
 		public const string BizAlucardIcon = "./ExternalTools/SotnRandoTools/BizAlucard.ico";
