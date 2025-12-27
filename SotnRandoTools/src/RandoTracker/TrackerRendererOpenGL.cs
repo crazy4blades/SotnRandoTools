@@ -171,8 +171,9 @@ namespace SotnRandoTools.RandoTracker
 		private GL Gl;
 
 		public int[] recyclerSpriteIdOrder = { 0, 18, 1, 2, 4, 23, 5, 6, 7, 19, 8, 9, 10, 12, 13, 14, 16, 17, 20, 21, 22, 24, 98, 25, 26, 27, 28, 29, 3, 11, 15, 98, 30, 31, 32, 33, 34 };
-		public int[] bountySpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 23, 24, 98, 22, 21, 20, 19, 18, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34 };
+		public int[] bountySpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 99, 99, 98, 22, 21, 20, 19, 18, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34 };
 		public int[] VanillaSpriteIdOrder =  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34 };
+		public int[] oracleSpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 28, 29, 99, 99, 99, 98, 32, 33, 34, 99, 99 };
 		public int EmptyCellCount = 0;
 
 		public unsafe Sprites(float scale, Vector2[] relicSlots, Tracker tracker, int columns, bool grid, bool progression, GL gl)
@@ -204,57 +205,42 @@ namespace SotnRandoTools.RandoTracker
 			int remainder = itemCount % columns;
 			EmptyCellCount = 0;
 
-			if (tracker.CurrentPreset != null && tracker.CurrentPreset.ToLower().Contains("recycler"))  // Recycler Mode
+			// Determine which sprite order to use
+			int[] spriteOrder = null;
+
+			if (tracker.CurrentPreset != null)
 			{
-				for (int i = 0; i < recyclerSpriteIdOrder.Length ; i++)
+				string preset = tracker.CurrentPreset.ToLower();
+
+				if (preset.Contains("recycler"))
 				{
-					if ((!grid && !tracker.relics[i].Collected) || (progression && !tracker.relics[i].Progression))
-					{
-						continue;
-					}
-
-					switch(recyclerSpriteIdOrder[i])
-					{
-						case 98:
-							// New Row
-							remainder = itemCount % columns;
-							if (remainder != 0)
-							{
-								itemCount += columns - remainder;
-								EmptyCellCount += columns - remainder;
-							}
-							break;
-						case 99:
-							// Empty
-							itemCount++;
-							EmptyCellCount++;
-							break;
-						default:
-							// Sprite
-							AddQuad(itemCount, recyclerSpriteIdOrder[i]);
-							itemCount++;
-							break;
-					}
+					spriteOrder = recyclerSpriteIdOrder;
 				}
-
-				goto RecyclerExitLabel;
+				else if (preset.Contains("oracle"))
+				{
+					spriteOrder = oracleSpriteIdOrder;
+				}
+				else if (new[] { "bounty-hunter", "hitman", "target-confirmed", "rampage", "chaos-lite" }
+						 .Any(p => preset.Contains(p)))
+				{
+					spriteOrder = bountySpriteIdOrder;
+				}
 			}
 
-			if (tracker.CurrentPreset != null && new[] { "bounty-hunter", "hitman", "target-confirmed", "rampage", "chaos-lite" }.Any(p => tracker.CurrentPreset.ToLower().Contains(p)))
-
-			// Bounty Hunter Mode
+			// If we matched a mode, process it
+			if (spriteOrder != null)
 			{
-				for (int i = 0; i < bountySpriteIdOrder.Length ; i++)
+				for (int i = 0; i < spriteOrder.Length; i++)
 				{
-					if ((!grid && !tracker.relics[i].Collected) || (progression && !tracker.relics[i].Progression))
+					if ((!grid && !tracker.relics[i].Collected) ||
+						(progression && !tracker.relics[i].Progression))
 					{
 						continue;
 					}
 
-					switch(bountySpriteIdOrder[i])
+					switch (spriteOrder[i])
 					{
-						case 98:
-							// New Row
+						case 98: // New Row
 							remainder = itemCount % columns;
 							if (remainder != 0)
 							{
@@ -262,20 +248,20 @@ namespace SotnRandoTools.RandoTracker
 								EmptyCellCount += columns - remainder;
 							}
 							break;
-						case 99:
-							// Empty
+
+						case 99: // Empty Cell
 							itemCount++;
 							EmptyCellCount++;
 							break;
-						default:
-							// Sprite
-							AddQuad(itemCount, bountySpriteIdOrder[i]);
+
+						default: // Sprite
+							AddQuad(itemCount, spriteOrder[i]);
 							itemCount++;
 							break;
 					}
 				}
 
-				goto BountyExitLabel;
+				goto ExitLabel;
 			}
 
 			// Normal Preset Relic Sprites
@@ -333,8 +319,7 @@ namespace SotnRandoTools.RandoTracker
 				itemCount++;
 			}
 
-		RecyclerExitLabel:
-		BountyExitLabel:
+			ExitLabel:
 
 			if (tracker.allBossesGoal)
 			{

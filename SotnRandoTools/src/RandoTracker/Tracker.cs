@@ -861,7 +861,20 @@ namespace SotnRandoTools.RandoTracker
 
 			if (presetObj != null)
 			{
-				Complexity = $"[{presetObj.Metadata.Extension}] - Complexity ({presetObj.Complexity.MinComplexity})";
+				string complexityText;
+
+				if (presetObj.Complexity == null || presetObj.Complexity.MinComplexity == null)
+				{
+					// Complexity missing → mark as "set"
+					complexityText = "set";
+				}
+				else
+				{
+					// Normal case
+					complexityText = presetObj.Complexity.MinComplexity.ToString();
+				}
+
+				Complexity = $"[{presetObj.Metadata.Extension}] - Complexity ({complexityText})";
 				SaveComplexityInfo(Complexity);
 			}
 			else
