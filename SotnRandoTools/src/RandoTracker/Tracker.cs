@@ -39,7 +39,7 @@ namespace SotnRandoTools.RandoTracker
 			new Item {Value = 73, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Silver Ring")},
 			new Item {Value = 14, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Spike Breaker")},
 			new Item {Value = 34, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Holy glasses")},
-			new Item {Value = 150, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Library card")}
+			new Item {Value = 166, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Library card")}
 		};
 		public readonly Item[] thrustSwords = new Item[]
 		{
@@ -672,6 +672,8 @@ namespace SotnRandoTools.RandoTracker
 		private bool UpdateProgressionItems()
 		{
 			int changes = 0;
+
+			// PASS 1 — Inventory detection
 			for (int i = 0; i < progressionItems.Length; i++)
 			{
 				if (sotnApi.AlucardApi.HasItemInInventory(progressionItems[i].Index))
@@ -684,8 +686,9 @@ namespace SotnRandoTools.RandoTracker
 							progressionItems[i].X += 100;
 						}
 						progressionItems[i].Y = currentMapY;
-						progressionItems[i].CollectedAt = (ushort) replayLenght;
+						progressionItems[i].CollectedAt = (ushort)replayLenght;
 					}
+
 					progressionItems[i].Collected = true;
 				}
 				else
@@ -694,38 +697,52 @@ namespace SotnRandoTools.RandoTracker
 				}
 			}
 
+			// PASS 2 — Equipped detection
 			for (int i = 0; i < progressionItems.Length; i++)
 			{
 				switch (i)
 				{
-					case 0:
-					case 1:
-						progressionItems[i].Equipped = (sotnApi.AlucardApi.Accessory1 == progressionItems[i].Value) || (sotnApi.AlucardApi.Accessory2 == progressionItems[i].Value);
+					case 0: // Accessory 1
+					case 1: // Accessory 2
+						progressionItems[i].Equipped =
+							(sotnApi.AlucardApi.Accessory1 == progressionItems[i].Value) ||
+							(sotnApi.AlucardApi.Accessory2 == progressionItems[i].Value);
 						break;
-					case 2:
-						progressionItems[i].Equipped = (sotnApi.AlucardApi.Armor == progressionItems[i].Value);
+
+					case 2: // Armor
+						progressionItems[i].Equipped =
+							(sotnApi.AlucardApi.Armor == progressionItems[i].Value);
 						break;
-					case 3:
-						progressionItems[i].Equipped = (sotnApi.AlucardApi.Helm == progressionItems[i].Value);
+
+					case 3: // Helm
+						progressionItems[i].Equipped =
+							(sotnApi.AlucardApi.Helm == progressionItems[i].Value);
 						break;
+
 					case 4:
-						progressionItems[i].Equipped = (sotnApi.AlucardApi.RightHand == progressionItems[i].Value) || (sotnApi.AlucardApi.LeftHand == progressionItems[i].Value);
+						progressionItems[i].Equipped =
+							(sotnApi.AlucardApi.RightHand == progressionItems[i].Value) ||
+							(sotnApi.AlucardApi.LeftHand == progressionItems[i].Value);
 						break;
+
 					default:
 						progressionItems[i].Equipped = false;
 						break;
 				}
 
-				if (!progressionItems[i].Status && (progressionItems[i].Collected || progressionItems[i].Equipped))
+				// PASS 3 — Status update
+				bool active = progressionItems[i].Collected || progressionItems[i].Equipped;
+
+				if (!progressionItems[i].Status && active)
 				{
 					progressionItems[i].Status = true;
 					itemsFlags |= (1 << i);
 					changes++;
 				}
-				else if (progressionItems[i].Status && !(progressionItems[i].Collected || progressionItems[i].Equipped))
+				else if (progressionItems[i].Status && !active)
 				{
 					progressionItems[i].Status = false;
-					itemsFlags &= (byte) ~(1 << i);
+					itemsFlags &= (byte)~(1 << i);
 					changes++;
 				}
 			}
@@ -835,7 +852,7 @@ namespace SotnRandoTools.RandoTracker
 			seedName = sotnApi.GameApi.ReadSeedName();
 			preset = sotnApi.GameApi.ReadPresetName();
 
-			string normalizedPreset = Regex.Replace(preset, "[^A-Za-z-]", "");
+			string normalizedPreset = Regex.Replace(preset, "[^A-Za-z0-9-]", "");
 			string presetFilePath = Path.Combine(Paths.PresetPath, normalizedPreset + ".json");
 
 			Preset? presetObj = null;

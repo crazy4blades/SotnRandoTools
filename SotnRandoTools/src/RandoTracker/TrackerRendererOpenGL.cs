@@ -355,7 +355,7 @@ namespace SotnRandoTools.RandoTracker
 					{
 						continue;
 					}
-					AddQuad(itemCount, 35 + i);
+					AddQuad(itemCount, 36 + i);
 					itemCount++;
 				}
 			}

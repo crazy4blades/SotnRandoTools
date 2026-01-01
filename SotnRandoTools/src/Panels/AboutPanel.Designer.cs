@@ -182,7 +182,7 @@ namespace SotnRandoTools
             this.patchNotesLink.ActiveLinkColor = System.Drawing.Color.Maroon;
             this.patchNotesLink.Font = new System.Drawing.Font("Tahoma", 14.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(204)));
             this.patchNotesLink.LinkColor = System.Drawing.Color.DodgerBlue;
-            this.patchNotesLink.Location = new System.Drawing.Point(7, 84);
+            this.patchNotesLink.Location = new System.Drawing.Point(6, 85);
             this.patchNotesLink.Name = "patchNotesLink";
             this.patchNotesLink.Size = new System.Drawing.Size(380, 52);
             this.patchNotesLink.TabIndex = 12;
