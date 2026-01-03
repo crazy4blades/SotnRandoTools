@@ -170,9 +170,9 @@ namespace SotnRandoTools.RandoTracker
 		private int columns;
 		private GL Gl;
 
-		public int[] VanillaSpriteIdOrder =  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34, 35};
+		public int[] VanillaSpriteIdOrder =  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34, 58};
 		public int[] recyclerSpriteIdOrder = { 0, 18, 1, 2, 4, 23, 5, 6, 7, 19, 8, 9, 10, 12, 13, 14, 16, 17, 20, 21, 22, 24, 98, 25, 26, 27, 28, 29, 3, 11, 15, 98, 30, 31, 32, 33, 35, 34};
-		public int[] bountySpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 98, 22, 21, 20, 19, 18, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 35, 34 };
+		public int[] bountySpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 98, 22, 21, 20, 19, 18, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33,57, 34 };
 		public int[] oracleSpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 28, 29, 98, 32, 33, 35, 34 };
 		public int[] anypercentSpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 30, 31, 32, 35, 34 };
 		public int EmptyCellCount = 0;
@@ -198,12 +198,13 @@ namespace SotnRandoTools.RandoTracker
 			{
 				totalObjects += 1; // sprite ID 35
 			}
-
+			totalObjects += tracker.importantItems.Length; // Important items icon
 			// Time attacks
 			if (tracker.allBossesGoal)
 			{
 				totalObjects += tracker.timeAttacks.Length;
 			}
+			
 
 			indices = new uint[totalObjects * 6];
 
@@ -340,6 +341,37 @@ namespace SotnRandoTools.RandoTracker
 				itemCount++;
 			}
 
+			bool importantCollected = false;
+
+			for (int i = 0; i < tracker.importantItems.Length; i++)
+			{
+				if (tracker.importantItems[i].Collected || tracker.importantItems[i].Equipped)
+				{
+					importantCollected = true;
+					break;
+				}
+			}
+
+			if (importantCollected || grid)
+			{
+				int importantIndex = 57 + tracker.timeAttacks.Length;
+
+				// New row before placing the icon
+				remainder = itemCount % columns;
+				if (remainder != 0)
+				{
+					itemCount += columns - remainder;
+				}
+
+				AddQuad(itemCount, importantIndex);
+				itemCount++;
+			}
+
+			if (vertices.Count == 0)
+			{
+				return;
+			}
+
 			ExitLabel:
 
 			if (tracker.allBossesGoal)
@@ -358,11 +390,6 @@ namespace SotnRandoTools.RandoTracker
 					AddQuad(itemCount, 36 + i);
 					itemCount++;
 				}
-			}
-
-			if (vertices.Count == 0)
-			{
-				return;
 			}
 
 			vertexArrayObject = Gl.GenVertexArray();
@@ -785,32 +812,53 @@ namespace SotnRandoTools.RandoTracker
 					break;
 				}
 			}
-			if (collected[35] == 0.0f && swordCollected)
+			if (collected[34] == 0.0f && swordCollected)
 			{
-				collected[35] = 0.1f;
+				collected[34] = 0.1f;
 			}
-			if (collected[35] != 0.0f && !swordCollected)
+			if (collected[34] != 0.0f && !swordCollected)
 			{
-				collected[35] = 0.0f;
+				collected[34] = 0.0f;
 			}
 
 			if (tracker.allBossesGoal)
 			{
 				for (int i = 0; i < tracker.timeAttacks.Length; i++)
 				{
-					if (collected[36 + i] == 0.0f && tracker.timeAttacks[i])
+					if (collected[35 + i] == 0.0f && tracker.timeAttacks[i])
 					{
 						changes = true;
-						collected[36 + i] = 0.1f;
+						collected[35 + i] = 0.1f;
 					}
-					if (collected[36 + i] != 0.0f && !tracker.timeAttacks[i])
+					if (collected[35 + i] != 0.0f && !tracker.timeAttacks[i])
 					{
 						changes = true;
-						collected[36 + i] = 0.0f;
+						collected[35 + i] = 0.0f;
 					}
 				}
 			}
 
+			bool importantCollected = false;
+
+			for (int i = 0; i < tracker.importantItems.Length; i++)
+			{
+				if (tracker.importantItems[i].Collected || tracker.importantItems[i].Equipped)
+				{
+					changes = true;
+					importantCollected = true;
+					break;
+				}
+			}
+
+			if (collected[57] == 0.0f && importantCollected)
+			{
+				collected[57] = 0.1f;
+			}
+
+			if (collected[57] != 0.0f && !importantCollected)
+			{
+				collected[57] = 0.0f;
+			}
 			for (int i = 0; i < collected.Length; i++)
 			{
 				if (collected[i] > 0.0f && collected[i] < 1.73322f)

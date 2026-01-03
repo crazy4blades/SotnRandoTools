@@ -38,8 +38,7 @@ namespace SotnRandoTools.RandoTracker
 			new Item {Value = 72, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Gold Ring")},
 			new Item {Value = 73, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Silver Ring")},
 			new Item {Value = 14, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Spike Breaker")},
-			new Item {Value = 34, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Holy glasses")},
-			new Item {Value = 166, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Library card")}
+			new Item {Value = 34, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Holy glasses")}
 		};
 		public readonly Item[] thrustSwords = new Item[]
 		{
@@ -48,6 +47,10 @@ namespace SotnRandoTools.RandoTracker
 			new Item {Value = 101, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Flamberge")},
 			new Item {Value = 103, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Zweihander")},
 			new Item {Value = 107, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Obsidian sword")}
+		};
+		public readonly Item[] importantItems = new Item[]
+		{
+			new Item {Value = 166, Index = (byte)SotnApi.Constants.Values.Alucard.Equipment.Items.IndexOf("Library card")}
 		};
 		public readonly bool[] timeAttacks = new bool[21];
 		public bool allBossesGoal = false;
@@ -92,7 +95,7 @@ namespace SotnRandoTools.RandoTracker
 			{ "Spike Breaker",  0b0000000000000000000000000000000100000000000000000000000000000000},
 			{ "Holy glasses",   0b0000000000000000000000000000001000000000000000000000000000000000},
 			{ "Thrust sword",   0b0000000000000000000000000000010000000000000000000000000000000000},
-			{ "Library card",   0b0000000000000000000000000000100000000000000000000000000000000000}
+			{  "Library card",  0b0000000000000000000000000001000000000000000000000000000000000000}
 		};
 		private readonly Dictionary<string, byte> abilityToIndex = new Dictionary<string, byte>
 		{
@@ -131,7 +134,7 @@ namespace SotnRandoTools.RandoTracker
 			{ "Spike Breaker",  32},
 			{ "Holy glasses",   33},
 			{ "Thrust sword",   34},
-			{ "Library card",   35}
+			{ "Library card",   57}
 		};
 		private readonly ulong[] abilityFlags = new ulong[]
 		{
@@ -267,6 +270,7 @@ namespace SotnRandoTools.RandoTracker
 				objectChanges = objectChanges || UpdateProgressionItems();
 				objectChanges = objectChanges || UpdateThrustSwords();
 				objectChanges = objectChanges || UpdateTimeAttacks();
+				objectChanges = objectChanges || UpdateImportantItems();
 				if (objectChanges)
 				{
 					UpdateOverlay();
@@ -583,6 +587,10 @@ namespace SotnRandoTools.RandoTracker
 			{
 				CheckReachability();
 			}
+			for (int i = 0; i < importantItems.Length; i++)
+			{
+				importantItems[i].Status = false;
+			}
 		}
 
 		private void UpdateSeedLabel()
@@ -673,31 +681,7 @@ namespace SotnRandoTools.RandoTracker
 		{
 			int changes = 0;
 
-			// PASS 1 — Inventory detection
-			for (int i = 0; i < progressionItems.Length; i++)
-			{
-				if (sotnApi.AlucardApi.HasItemInInventory(progressionItems[i].Index))
-				{
-					if (progressionItems[i].CollectedAt == 0)
-					{
-						progressionItems[i].X = currentMapX;
-						if (secondCastle)
-						{
-							progressionItems[i].X += 100;
-						}
-						progressionItems[i].Y = currentMapY;
-						progressionItems[i].CollectedAt = (ushort)replayLenght;
-					}
-
-					progressionItems[i].Collected = true;
-				}
-				else
-				{
-					progressionItems[i].Collected = false;
-				}
-			}
-
-			// PASS 2 — Equipped detection
+			// PASS 1 — Equipped detection ONLY
 			for (int i = 0; i < progressionItems.Length; i++)
 			{
 				switch (i)
@@ -719,19 +703,13 @@ namespace SotnRandoTools.RandoTracker
 							(sotnApi.AlucardApi.Helm == progressionItems[i].Value);
 						break;
 
-					case 4:
-						progressionItems[i].Equipped =
-							(sotnApi.AlucardApi.RightHand == progressionItems[i].Value) ||
-							(sotnApi.AlucardApi.LeftHand == progressionItems[i].Value);
-						break;
-
 					default:
 						progressionItems[i].Equipped = false;
 						break;
 				}
 
-				// PASS 3 — Status update
-				bool active = progressionItems[i].Collected || progressionItems[i].Equipped;
+				// PASS 2 — Status update
+				bool active = progressionItems[i].Equipped;
 
 				if (!progressionItems[i].Status && active)
 				{
@@ -742,7 +720,61 @@ namespace SotnRandoTools.RandoTracker
 				else if (progressionItems[i].Status && !active)
 				{
 					progressionItems[i].Status = false;
-					itemsFlags &= (byte)~(1 << i);
+					itemsFlags &= (byte) ~(1 << i);
+					changes++;
+				}
+			}
+
+			return changes > 0;
+		}
+		private bool UpdateImportantItems()
+		{
+			int changes = 0;
+
+			// PASS 1 — Inventory detection
+			for (int i = 0; i < importantItems.Length; i++)
+			{
+				if (sotnApi.AlucardApi.HasItemInInventory(importantItems[i].Index))
+				{
+					if (importantItems[i].CollectedAt == 0)
+					{
+						importantItems[i].X = currentMapX;
+						if (secondCastle)
+						{
+							importantItems[i].X += 100;
+						}
+						importantItems[i].Y = currentMapY;
+						importantItems[i].CollectedAt = (ushort) replayLenght;
+					}
+
+					importantItems[i].Collected = true;
+				}
+				else
+				{
+					importantItems[i].Collected = false;
+				}
+			}
+
+			// PASS 2 — Equipped detection
+			for (int i = 0; i < importantItems.Length; i++)
+			{
+				importantItems[i].Equipped =
+					(sotnApi.AlucardApi.RightHand == importantItems[i].Value) ||
+					(sotnApi.AlucardApi.LeftHand == importantItems[i].Value);
+
+				// PASS 3 — Status update
+				bool active = importantItems[i].Collected || importantItems[i].Equipped;
+
+				if (!importantItems[i].Status && active)
+				{
+					importantItems[i].Status = true;
+					itemsFlags |= (1 << i);
+					changes++;
+				}
+				else if (importantItems[i].Status && !active)
+				{
+					importantItems[i].Status = false;
+					itemsFlags &= (byte) ~(1 << i);
 					changes++;
 				}
 			}
