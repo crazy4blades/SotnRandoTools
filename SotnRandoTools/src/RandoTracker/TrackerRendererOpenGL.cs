@@ -170,15 +170,16 @@ namespace SotnRandoTools.RandoTracker
 		private int columns;
 		private GL Gl;
 
-		public int[] VanillaSpriteIdOrder =  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34, 59};
+		public int[] VanillaSpriteIdOrder =  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 59, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34};
 		public int[] recyclerSpriteIdOrder = { 0, 18, 1, 2, 4, 23, 5, 6, 7, 19, 8, 9, 10, 12, 13, 14, 16, 17, 20, 21, 22, 24, 98, 25, 26, 27, 28, 29, 3, 11, 15, 98, 30, 31, 32, 33, 35, 34};
-		public int[] bountySpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 98, 22, 21, 20, 19, 18, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33,59, 34 };
+		public int[] bountySpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 98, 22, 21, 20, 19, 18, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34, 59 };
 		public int[] oracleSpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 28, 29, 98, 32, 33, 35, 34 };
 		public int[] anypercentSpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 30, 31, 32, 35, 34 };
 		public int EmptyCellCount = 0;
 
 		public unsafe Sprites(float scale, Vector2[] relicSlots, Tracker tracker, int columns, bool grid, bool progression, GL gl)
 		{
+			List<(int index, int sprite)> importantQuads = new();
 			Gl = gl;
 			this.scale = scale;
 			this.relicSlots = relicSlots;
@@ -246,6 +247,10 @@ namespace SotnRandoTools.RandoTracker
 				else if (preset.Contains("any-percent"))
 				{
 					spriteOrder = anypercentSpriteIdOrder;
+				}
+				else
+				{
+					spriteOrder = VanillaSpriteIdOrder;
 				}
 			}
 
@@ -317,7 +322,7 @@ namespace SotnRandoTools.RandoTracker
 			{
 				itemCount += columns - remainder;
 			}
-			for (int i = 0; i < 5; i++)
+			for (int i = 0; i < 4; i++)
 			{
 				if (!grid && !tracker.progressionItems[i].Collected)
 				{
@@ -337,35 +342,11 @@ namespace SotnRandoTools.RandoTracker
 			}
 			if (grid || swordCollected)
 			{
-				AddQuad(itemCount, 35);
+				AddQuad(itemCount, 34);
 				itemCount++;
 			}
 
-			bool importantCollected = false;
-
-			for (int i = 0; i < tracker.importantItems.Length; i++)
-			{
-				if (tracker.importantItems[i].Collected || tracker.importantItems[i].Equipped)
-				{
-					importantCollected = true;
-					break;
-				}
-			}
-
-			if (importantCollected || grid)
-			{
-				int importantIndex = 58 + tracker.timeAttacks.Length;
-
-				// New row before placing the icon
-				remainder = itemCount % columns;
-				if (remainder != 0)
-				{
-					itemCount += columns - remainder;
-				}
-
-				AddQuad(itemCount, importantIndex);
-				itemCount++;
-			}
+			
 
 			if (vertices.Count == 0)
 			{
@@ -373,6 +354,11 @@ namespace SotnRandoTools.RandoTracker
 			}
 
 			ExitLabel:
+			remainder = itemCount % columns;
+			if (remainder != 0)
+			{
+				itemCount += columns - remainder;
+			}
 
 			if (tracker.allBossesGoal)
 			{
@@ -387,11 +373,40 @@ namespace SotnRandoTools.RandoTracker
 					{
 						continue;
 					}
-					AddQuad(itemCount, 36 + i);
+					AddQuad(itemCount, 35 + i);
 					itemCount++;
 				}
 			}
+			foreach (var quad in importantQuads)
+			{
+				AddQuad(quad.index, quad.sprite);
+				itemCount++;
 
+			}
+			bool importantCollected = false;
+
+			for (int i = 0; i < tracker.importantItems.Length; i++)
+			{
+				if (tracker.importantItems[i].Collected || tracker.importantItems[i].Equipped)
+				{
+					importantCollected = true;
+					break;
+				}
+			}
+
+			if (importantCollected || grid)
+			{
+				int importantIndex = 59;
+
+				// New row before placing the icon
+				remainder = itemCount % columns;
+				if (remainder != 0)
+				{
+					itemCount += columns - remainder;
+				}
+
+				importantQuads.Add((itemCount, importantIndex));
+			}
 			vertexArrayObject = Gl.GenVertexArray();
 			Gl.BindVertexArray(vertexArrayObject);
 
@@ -611,14 +626,12 @@ namespace SotnRandoTools.RandoTracker
 
 		private void OnLoad()
 		{
-			CalculateGrid(toolConfig.Tracker.Width, toolConfig.Tracker.Height);
-
 			Gl.ClearColor(clear);
 
+			// --- Create and link shaders ---
 			uint vertexShader = Gl.CreateShader(ShaderType.VertexShader);
 			Gl.ShaderSource(vertexShader, File.ReadAllText(Paths.VertexShader));
 			Gl.CompileShader(vertexShader);
-
 			Gl.GetShader(vertexShader, ShaderParameterName.CompileStatus, out int vStatus);
 			if (vStatus != (int) GLEnum.True)
 				throw new Exception("Vertex shader failed to compile: " + Gl.GetShaderInfoLog(vertexShader));
@@ -648,30 +661,51 @@ namespace SotnRandoTools.RandoTracker
 			Gl.DeleteShader(vertexShader);
 			Gl.DeleteShader(fragmentShader);
 
+			// --- Viewport and grid must agree ---
 			int[] viewportData = new int[4];
 			Gl.GetInteger(GetPName.Viewport, viewportData);
+			int viewportWidth = viewportData[2];
+			int viewportHeight = viewportData[3];
+
+			// If you want to force a specific size, you can also:
+			// Gl.Viewport(0, 0, toolConfig.Tracker.Width, toolConfig.Tracker.Height);
+			// and then use those values instead.
+
+			// Calculate grid based on the actual viewport size
+			CalculateGrid(viewportWidth, viewportHeight);
+
+			// --- Set uniforms ---
 			Gl.UseProgram(shaderProgram);
-			Gl.Uniform2(Gl.GetUniformLocation(shaderProgram, "viewportSize"), (float) viewportData[2], (float) viewportData[3]);
+			int viewportSizeLocation = Gl.GetUniformLocation(shaderProgram, "viewportSize");
+			Gl.Uniform2(viewportSizeLocation, (float) viewportWidth, (float) viewportHeight);
+
 			collectedUniform = Gl.GetUniformLocation(shaderProgram, "collected");
 			gridUniform = Gl.GetUniformLocation(shaderProgram, "grid");
 			uTextureUniform = Gl.GetUniformLocation(shaderProgram, "uTexture");
+
 			Gl.Uniform1(gridUniform, 1);
 
-			Gl.UseProgram(shaderProgram);
+			// --- Load textures ---
 			texture = LoadTexture(Paths.CombinedTexture);
 			font = LoadTexture(Paths.FontAtlas);
 			CheckForErrors();
+
 			Gl.ActiveTexture(TextureUnit.Texture0);
 			Gl.BindTexture(GLEnum.Texture2D, texture);
+
 			Gl.ActiveTexture(TextureUnit.Texture1);
 			Gl.BindTexture(TextureTarget.Texture2D, font);
+
 			int[] textures = new int[2];
-			textures[0] = 0;
-			textures[1] = 1;
+			textures[0] = 0; // texture unit 0
+			textures[1] = 1; // texture unit 1
 			Gl.Uniform1(uTextureUniform, 2, textures);
 
+			// --- Blending, no depth (pure 2D overlay, no z-overlap) ---
+			Gl.Disable(EnableCap.DepthTest);
 			Gl.Enable(EnableCap.Blend);
 			Gl.BlendFunc(BlendingFactor.SrcAlpha, BlendingFactor.OneMinusSrcAlpha);
+
 			Gl.UseProgram(shaderProgram);
 
 			CheckForErrors();
@@ -758,7 +792,7 @@ namespace SotnRandoTools.RandoTracker
 				case "hitman":
 				case "target-confirmed":
 				case "rampage":
-				case "rampage-te":
+				case "rampage-25te":
 				case "chaos-lite":
 					return Paths.BountyTexture;
 				default:
@@ -985,40 +1019,49 @@ namespace SotnRandoTools.RandoTracker
 
 		public void CalculateGrid(int width, int height)
 		{
-			columns = (int) (8 * (((float) width / (float) height)));
+			// --- 1. Determine column count ---
+			columns = (int) (8f * (width / (float) height));
 			if (columns < 6)
-			{
 				columns = 6;
-			}
 
 			int relicCount = 25;
 
-			if (sprites != null)	// Account for Empty Grid Cells when calculating number of rows
+			if (sprites != null)
 				relicCount += sprites.EmptyCellCount;
 
-			int normalRelicRows = (int) Math.Ceiling((float) (relicCount) / (float) columns);
-			int bossRows = (int) Math.Ceiling((float) (tracker.timeAttacks.Length) / (float) columns);
+			// Add boss rows only if enabled
+			int bossCount = tracker.allBossesGoal ? tracker.timeAttacks.Length : 0;
 
-			if (!tracker.allBossesGoal)
-			{
-				bossRows = 0;
-			}
+			// Reserve 1 row for progression/thrust sword row
+			// Reserve 1 row for important item row
+			int reservedRows = 2;
 
+			// Compute row counts
+			int relicRows = (int) Math.Ceiling(relicCount / (float) columns);
+			int bossRows = (int) Math.Ceiling(bossCount / (float) columns);
+
+			int totalRows = relicRows + bossRows + reservedRows;
+
+			// --- 4. Compute scale ---
 			int cellSize = ItemSize + CellPadding;
-			float cellsPerColumn = (float) (height - (LabelOffset + CellPadding)) / ((cellSize * (2 + normalRelicRows + bossRows)));
-			float cellsPerRow = (float) (width - (CellPadding * 5)) / ((cellSize * columns));
-			Scale = (float) Math.Round((cellsPerColumn <= cellsPerRow ? cellsPerColumn : cellsPerRow), 2);
+
+			float cellsPerColumn =
+				(height - (LabelOffset + CellPadding)) / (float) (cellSize * totalRows);
+
+			float cellsPerRow =
+				(width - (CellPadding * 5)) / (float) (cellSize * columns);
+
+			Scale = (float) Math.Round(Math.Min(cellsPerColumn, cellsPerRow), 2);
 
 			double roundedScale = Math.Floor(Scale);
-
 			if (Scale - roundedScale < PixelPerfectSnapMargin)
-			{
 				Scale = (float) roundedScale;
-			}
 
+			// --- 5. Compute slot positions ---
 			int row = 0;
 			int col = 0;
-			int totalCells = columns * (normalRelicRows + 2 + bossRows);
+
+			int totalCells = columns * totalRows;
 
 			for (int i = 0; i < totalCells; i++)
 			{
@@ -1027,7 +1070,13 @@ namespace SotnRandoTools.RandoTracker
 					row++;
 					col = 0;
 				}
-				relicSlots[i] = new Vector2(CellPadding + (col * (ItemSize + CellPadding) * Scale), Height - (LabelOffset + (ItemSize + CellPadding) * Scale) - (row * (ItemSize + CellPadding) * Scale));
+
+				relicSlots[i] = new Vector2(
+					CellPadding + (col * cellSize * Scale),
+					Height - (LabelOffset + (ItemSize + CellPadding) * Scale)
+					- (row * cellSize * Scale)
+				);
+
 				col++;
 			}
 		}
