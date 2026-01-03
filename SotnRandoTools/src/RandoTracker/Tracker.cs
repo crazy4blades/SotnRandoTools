@@ -681,7 +681,14 @@ namespace SotnRandoTools.RandoTracker
 		{
 			int changes = 0;
 
-			// PASS 1 — Equipped detection ONLY
+			// PASS 1 — Inventory detection
+			for (int i = 0; i < progressionItems.Length; i++)
+			{
+				progressionItems[i].Collected =
+					sotnApi.AlucardApi.HasItemInInventory(progressionItems[i].Index);
+			}
+
+			// PASS 2 — Equipped detection ONLY
 			for (int i = 0; i < progressionItems.Length; i++)
 			{
 				switch (i)
@@ -708,8 +715,8 @@ namespace SotnRandoTools.RandoTracker
 						break;
 				}
 
-				// PASS 2 — Status update
-				bool active = progressionItems[i].Equipped;
+				// PASS 3 — Status update
+				bool active = progressionItems[i].Collected || progressionItems[i].Equipped;
 
 				if (!progressionItems[i].Status && active)
 				{
@@ -720,7 +727,7 @@ namespace SotnRandoTools.RandoTracker
 				else if (progressionItems[i].Status && !active)
 				{
 					progressionItems[i].Status = false;
-					itemsFlags &= (byte) ~(1 << i);
+					itemsFlags &= (byte)~(1 << i);
 					changes++;
 				}
 			}
@@ -734,25 +741,8 @@ namespace SotnRandoTools.RandoTracker
 			// PASS 1 — Inventory detection
 			for (int i = 0; i < importantItems.Length; i++)
 			{
-				if (sotnApi.AlucardApi.HasItemInInventory(importantItems[i].Index))
-				{
-					if (importantItems[i].CollectedAt == 0)
-					{
-						importantItems[i].X = currentMapX;
-						if (secondCastle)
-						{
-							importantItems[i].X += 100;
-						}
-						importantItems[i].Y = currentMapY;
-						importantItems[i].CollectedAt = (ushort) replayLenght;
-					}
-
-					importantItems[i].Collected = true;
-				}
-				else
-				{
-					importantItems[i].Collected = false;
-				}
+				importantItems[i].Collected =
+					sotnApi.AlucardApi.HasItemInInventory(importantItems[i].Index);
 			}
 
 			// PASS 2 — Equipped detection
@@ -774,7 +764,7 @@ namespace SotnRandoTools.RandoTracker
 				else if (importantItems[i].Status && !active)
 				{
 					importantItems[i].Status = false;
-					itemsFlags &= (byte) ~(1 << i);
+					itemsFlags &= (byte)~(1 << i);
 					changes++;
 				}
 			}

@@ -169,8 +169,8 @@ namespace SotnRandoTools.RandoTracker
 		private Vector2[] relicSlots;
 		private int columns;
 		private GL Gl;
-
-		public int[] VanillaSpriteIdOrder =  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 59, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34};
+		 
+		public int[] VanillaSpriteIdOrder =  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34, 59};
 		public int[] recyclerSpriteIdOrder = { 0, 18, 1, 2, 4, 23, 5, 6, 7, 19, 8, 9, 10, 12, 13, 14, 16, 17, 20, 21, 22, 24, 98, 25, 26, 27, 28, 29, 3, 11, 15, 98, 30, 31, 32, 33, 35, 34};
 		public int[] bountySpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 98, 22, 21, 20, 19, 18, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34, 59 };
 		public int[] oracleSpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 28, 29, 98, 32, 33, 35, 34 };
@@ -179,50 +179,16 @@ namespace SotnRandoTools.RandoTracker
 
 		public unsafe Sprites(float scale, Vector2[] relicSlots, Tracker tracker, int columns, bool grid, bool progression, GL gl)
 		{
-			List<(int index, int sprite)> importantQuads = new();
 			Gl = gl;
 			this.scale = scale;
 			this.relicSlots = relicSlots;
 			this.columns = columns;
 
-			int totalObjects = 0;
-
-			// Relics
-			totalObjects += tracker.relics.Length;
-
-			// Progression items
-			totalObjects += tracker.progressionItems.Length;
-
-			// Thrust swords (only one icon is drawn if ANY sword is collected)
-			bool anySword = tracker.thrustSwords.Any(s => s.Collected);
-			if (grid || anySword)
-			{
-				totalObjects += 1; // sprite ID 35
-			}
-			totalObjects += tracker.importantItems.Length; // Important items icon
-			// Time attacks
-			if (tracker.allBossesGoal)
-			{
-				totalObjects += tracker.timeAttacks.Length;
-			}
-			
-
-			indices = new uint[totalObjects * 6];
-
-			int ind = 0;
-			for (int i = 0; i < totalObjects; i++)
-			{
-				indices[ind++] = (uint) (0 + (i * 4));
-				indices[ind++] = (uint) (1 + (i * 4));
-				indices[ind++] = (uint) (2 + (i * 4));
-				indices[ind++] = (uint) (2 + (i * 4));
-				indices[ind++] = (uint) (3 + (i * 4));
-				indices[ind++] = (uint) (0 + (i * 4));
-			}
+			vertices.Clear();
+			EmptyCellCount = 0;
 
 			int itemCount = 0;
-			int remainder = itemCount % columns;
-			EmptyCellCount = 0;
+			int remainder = 0;
 
 			// Determine which sprite order to use
 			int[] spriteOrder = null;
@@ -240,7 +206,7 @@ namespace SotnRandoTools.RandoTracker
 					spriteOrder = oracleSpriteIdOrder;
 				}
 				else if (new[] { "bounty-hunter", "hitman", "target-confirmed", "rampage", "chaos-lite" }
-						 .Any(p => preset.Contains(p)))
+						.Any(p => preset.Contains(p)))
 				{
 					spriteOrder = bountySpriteIdOrder;
 				}
@@ -254,11 +220,12 @@ namespace SotnRandoTools.RandoTracker
 				}
 			}
 
-			// If we matched a mode, process it
+			// PRESET MODE
 			if (spriteOrder != null)
 			{
 				for (int i = 0; i < spriteOrder.Length; i++)
 				{
+					// Relic gating for presets (same as before)
 					if ((!grid && !tracker.relics[i].Collected) ||
 						(progression && !tracker.relics[i].Progression))
 					{
@@ -288,78 +255,113 @@ namespace SotnRandoTools.RandoTracker
 					}
 				}
 
-				goto ExitLabel;
-			}
-
-			// Normal Preset Relic Sprites
-			for (int i = 0; i < 25; i++)
-			{
-				if ((!grid && !tracker.relics[i].Collected) || (progression && !tracker.relics[i].Progression))
+				// Align to row end after preset layout
+				remainder = itemCount % columns;
+				if (remainder != 0)
 				{
-					continue;
-				}
-				AddQuad(itemCount, i);
-				itemCount++;
-			}
-
-			// Creates new Row
-			remainder = itemCount % columns;
-			if (remainder != 0)
-			{
-				itemCount += columns - remainder;
-			}
-			for (int i = 0; i < 5; i++)
-			{
-				if (!grid && !tracker.relics[25 + i].Collected)
-				{
-					continue;
-				}
-				AddQuad(itemCount, 25 + i);
-				itemCount++;
-			}
-			remainder = itemCount % columns;
-			if (remainder != 0)
-			{
-				itemCount += columns - remainder;
-			}
-			for (int i = 0; i < 4; i++)
-			{
-				if (!grid && !tracker.progressionItems[i].Collected)
-				{
-					continue;
-				}
-				AddQuad(itemCount, 30 + i);
-				itemCount++;
-			}
-			bool swordCollected = false;
-			for (int i = 0; i < tracker.thrustSwords.Length; i++)
-			{
-				if (tracker.thrustSwords[i].Collected)
-				{
-					swordCollected = true;
-					break;
+					itemCount += columns - remainder;
 				}
 			}
-			if (grid || swordCollected)
+			else
 			{
-				AddQuad(itemCount, 34);
-				itemCount++;
+				// NORMAL PRESET
+
+				// Relics 0–24
+				for (int i = 0; i < 25; i++)
+				{
+					if ((!grid && !tracker.relics[i].Collected) ||
+						(progression && !tracker.relics[i].Progression))
+					{
+						continue;
+					}
+
+					AddQuad(itemCount, i);
+					itemCount++;
+				}
+
+				// New row
+				remainder = itemCount % columns;
+				if (remainder != 0)
+				{
+					itemCount += columns - remainder;
+				}
+
+				// Relics 25–29
+				for (int i = 0; i < 5; i++)
+				{
+					if (!grid && !tracker.relics[25 + i].Collected)
+					{
+						continue;
+					}
+
+					AddQuad(itemCount, 25 + i);
+					itemCount++;
+				}
+
+				// New row
+				remainder = itemCount % columns;
+				if (remainder != 0)
+				{
+					itemCount += columns - remainder;
+				}
+
+				// Progression items (first 4, using Status)
+				for (int i = 0; i < 4 && i < tracker.progressionItems.Length; i++)
+				{
+					if (!grid && !tracker.progressionItems[i].Status)
+					{
+						continue;
+					}
+
+					AddQuad(itemCount, 30 + i);
+					itemCount++;
+				}
+
+				// Thrust swords (single aggregated icon)
+bool swordCollected = false;
+for (int i = 0; i < tracker.thrustSwords.Length; i++)
+{
+    if (tracker.thrustSwords[i].Collected)
+    {
+        swordCollected = true;
+        break;
+    }
+}
+
+if (grid || swordCollected)
+{
+    AddQuad(itemCount, 34); // thrust sword icon
+    itemCount++;
+}
+
+// IMPORTANT ITEMS (single aggregated icon at sprite 59)
+bool importantActive = false;
+for (int i = 0; i < tracker.importantItems.Length; i++)
+{
+    if (tracker.importantItems[i].Status)   // Status = collected OR equipped
+    {
+        importantActive = true;
+        break;
+    }
+}
+
+if (grid || importantActive)
+{
+    AddQuad(itemCount, 59); // <-- ALWAYS sprite 59
+    itemCount++;
+}
+
+// Align to row end after normal layout
+remainder = itemCount % columns;
+if (remainder != 0)
+{
+    itemCount += columns - remainder;
+}
+
+
 			}
 
-			
-
-			if (vertices.Count == 0)
-			{
-				return;
-			}
-
-			ExitLabel:
-			remainder = itemCount % columns;
-			if (remainder != 0)
-			{
-				itemCount += columns - remainder;
-			}
-
+			// Time attacks (if enabled)
 			if (tracker.allBossesGoal)
 			{
 				remainder = itemCount % columns;
@@ -367,55 +369,47 @@ namespace SotnRandoTools.RandoTracker
 				{
 					itemCount += columns - remainder;
 				}
+
 				for (int i = 0; i < tracker.timeAttacks.Length; i++)
 				{
 					if (!grid && !tracker.timeAttacks[i])
 					{
 						continue;
 					}
+
 					AddQuad(itemCount, 35 + i);
 					itemCount++;
 				}
 			}
-			foreach (var quad in importantQuads)
+
+			// Build index buffer based on actual quad count
+			// Each quad = 4 vertices, each vertex = 5 floats
+			int quadCount = vertices.Count / (4 * 5);
+			indices = new uint[quadCount * 6];
+
+			int ind = 0;
+			for (int i = 0; i < quadCount; i++)
 			{
-				AddQuad(quad.index, quad.sprite);
-				itemCount++;
-
-			}
-			bool importantCollected = false;
-
-			for (int i = 0; i < tracker.importantItems.Length; i++)
-			{
-				if (tracker.importantItems[i].Collected || tracker.importantItems[i].Equipped)
-				{
-					importantCollected = true;
-					break;
-				}
+				uint baseVertex = (uint)(i * 4);
+				indices[ind++] = baseVertex + 0;
+				indices[ind++] = baseVertex + 1;
+				indices[ind++] = baseVertex + 2;
+				indices[ind++] = baseVertex + 2;
+				indices[ind++] = baseVertex + 3;
+				indices[ind++] = baseVertex + 0;
 			}
 
-			if (importantCollected || grid)
-			{
-				int importantIndex = 59;
-
-				// New row before placing the icon
-				remainder = itemCount % columns;
-				if (remainder != 0)
-				{
-					itemCount += columns - remainder;
-				}
-
-				importantQuads.Add((itemCount, importantIndex));
-			}
+			// Upload vertex data
 			vertexArrayObject = Gl.GenVertexArray();
 			Gl.BindVertexArray(vertexArrayObject);
 
 			vertexBuffer = Gl.GenBuffer();
 			Gl.BindBuffer(BufferTargetARB.ArrayBuffer, vertexBuffer);
+
 			verticeArray = vertices.ToArray();
 			fixed (void* buf = verticeArray)
 			{
-				Gl.BufferData(BufferTargetARB.ArrayBuffer, (uint) (vertices.Count * sizeof(float)), buf, BufferUsageARB.StaticDraw);
+				Gl.BufferData(BufferTargetARB.ArrayBuffer, (uint)(vertices.Count * sizeof(float)), buf, BufferUsageARB.StaticDraw);
 			}
 
 			Gl.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 5 * sizeof(float), 0);
@@ -425,11 +419,12 @@ namespace SotnRandoTools.RandoTracker
 			Gl.EnableVertexAttribArray(1);
 			Gl.EnableVertexAttribArray(2);
 
+			// Upload index data
 			indexBuffer = Gl.GenBuffer();
 			Gl.BindBuffer(BufferTargetARB.ElementArrayBuffer, indexBuffer);
-			fixed (void* buf = indices)
+			fixed (void* ibuf = indices)
 			{
-				Gl.BufferData(BufferTargetARB.ElementArrayBuffer, (uint) (indices.Length * sizeof(uint)), buf, BufferUsageARB.StaticDraw);
+				Gl.BufferData(BufferTargetARB.ElementArrayBuffer, (uint)(indices.Length * sizeof(uint)), ibuf, BufferUsageARB.StaticDraw);
 			}
 		}
 		public unsafe void Draw()
@@ -807,9 +802,9 @@ namespace SotnRandoTools.RandoTracker
 				SDL_SetWindowAlwaysOnTop(window, alwaysOnTop ? SDL_bool.SDL_TRUE : SDL_bool.SDL_FALSE);
 			}
 
-
-
 			bool changes = false;
+
+			// RELICS
 			for (int i = 0; i < tracker.relics.Length; i++)
 			{
 				if (collected[i] == 0.0f && tracker.relics[i].Collected)
@@ -823,6 +818,8 @@ namespace SotnRandoTools.RandoTracker
 					collected[i] = 0.0f;
 				}
 			}
+
+			// PROGRESSION ITEMS
 			for (int i = 0; i < tracker.progressionItems.Length; i++)
 			{
 				if (collected[30 + i] == 0.0f && tracker.progressionItems[i].Status)
@@ -836,16 +833,19 @@ namespace SotnRandoTools.RandoTracker
 					collected[30 + i] = 0.0f;
 				}
 			}
+
+			// THRUST SWORD (aggregated)
 			bool swordCollected = false;
 			for (int i = 0; i < tracker.thrustSwords.Length; i++)
 			{
 				if (tracker.thrustSwords[i].Collected || tracker.thrustSwords[i].Equipped)
 				{
-					changes = true;
 					swordCollected = true;
+					changes = true;
 					break;
 				}
 			}
+
 			if (collected[34] == 0.0f && swordCollected)
 			{
 				collected[34] = 0.1f;
@@ -855,6 +855,7 @@ namespace SotnRandoTools.RandoTracker
 				collected[34] = 0.0f;
 			}
 
+			// BOSSES (time attacks)
 			if (tracker.allBossesGoal)
 			{
 				for (int i = 0; i < tracker.timeAttacks.Length; i++)
@@ -872,27 +873,30 @@ namespace SotnRandoTools.RandoTracker
 				}
 			}
 
-			bool importantCollected = false;
+			// IMPORTANT ITEMS (aggregated icon at index 59)
+			bool importantActive = tracker.importantItems.Any(item => item.Status);
 
 			for (int i = 0; i < tracker.importantItems.Length; i++)
 			{
 				if (tracker.importantItems[i].Collected || tracker.importantItems[i].Equipped)
 				{
+					importantActive = true;
 					changes = true;
-					importantCollected = true;
 					break;
 				}
 			}
 
-			if (collected[59] == 0.0f && importantCollected)
+			if (collected[59] == 0.0f && importantActive)
 			{
 				collected[59] = 0.1f;
 			}
 
-			if (collected[59] != 0.0f && !importantCollected)
+			if (collected[59] != 0.0f && !importantActive)
 			{
 				collected[59] = 0.0f;
 			}
+
+			// ANIMATION STEP
 			for (int i = 0; i < collected.Length; i++)
 			{
 				if (collected[i] > 0.0f && collected[i] < 1.73322f)
@@ -901,45 +905,47 @@ namespace SotnRandoTools.RandoTracker
 				}
 			}
 
+			// SEED INFO / COMPLEXITY TEXT
 			if (seedInfo.text != tracker.SeedInfo)
 			{
 				if (tracker.allBossesGoal)
 				{
 					CalculateGrid(Width, Height);
 				}
+
 				seedInfo.Dispose();
 				seedInfo = new Text(tracker.SeedInfo, Width, Height, collectedUniform, Gl);
+
 				complexity.Dispose();
-				complexity = new Text(tracker.Complexity, Width, Height - (int)seedInfo.ScaledGlyphHeight , collectedUniform, Gl);
+				complexity = new Text(tracker.Complexity, Width, Height - (int)seedInfo.ScaledGlyphHeight, collectedUniform, Gl);
+
 				sprites.Dispose();
 				sprites = new Sprites(Scale, relicSlots, tracker, columns, toolConfig.Tracker.GridLayout, toolConfig.Tracker.ProgressionRelicsOnly, Gl);
 			}
 
+			// SPRITE REBUILD ON CHANGE
 			if (changes || !toolConfig.Tracker.GridLayout)
 			{
 				sprites.Dispose();
 				sprites = new Sprites(Scale, relicSlots, tracker, columns, toolConfig.Tracker.GridLayout, toolConfig.Tracker.ProgressionRelicsOnly, Gl);
 			}
-			// Check if preset changed → reload texture and rebuild sprites
+
+			// PRESET CHANGE → RELOAD TEXTURES
 			if (tracker.CurrentPreset != currentPresetId)
 			{
 				currentPresetId = tracker.CurrentPreset;
 
-				// Delete old texture
 				if (texture != 0)
 					Gl.DeleteTexture(texture);
-					Gl.DeleteTexture(font);
+				Gl.DeleteTexture(font);
 
-				// Load new texture
 				string texturePath = GetTexturePathForPreset(currentPresetId);
 				texture = LoadTexture(texturePath);
 				font = LoadTexture(Paths.FontAtlas);
 
-				// Rebind to Texture0
 				Gl.ActiveTexture(TextureUnit.Texture0);
 				Gl.BindTexture(GLEnum.Texture2D, texture);
 
-				// Rebuild sprites with new preset
 				sprites.Dispose();
 				sprites = new Sprites(Scale, relicSlots, tracker, columns, toolConfig.Tracker.GridLayout, toolConfig.Tracker.ProgressionRelicsOnly, Gl);
 			}
@@ -1024,7 +1030,7 @@ namespace SotnRandoTools.RandoTracker
 			if (columns < 6)
 				columns = 6;
 
-			int relicCount = 25;
+			int relicCount = 26;
 
 			if (sprites != null)
 				relicCount += sprites.EmptyCellCount;
