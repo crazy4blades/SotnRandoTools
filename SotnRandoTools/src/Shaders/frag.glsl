@@ -5,7 +5,7 @@ flat in int sIndex;
 
 out vec4 fragColor;
 
-uniform float collected[58];
+uniform float collected[60];
 uniform sampler2D uTexture[2];
 uniform bool grid;
 

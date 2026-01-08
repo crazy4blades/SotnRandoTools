@@ -173,7 +173,7 @@ namespace SotnRandoTools.RandoTracker
 		public int[] VanillaSpriteIdOrder =  { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34, 59};
 		public int[] recyclerSpriteIdOrder = { 0, 18, 1, 2, 4, 23, 5, 6, 7, 19, 8, 9, 10, 12, 13, 14, 16, 17, 20, 21, 22, 24, 98, 25, 26, 27, 28, 29, 3, 11, 15, 98, 30, 31, 32, 33, 35, 34};
 		public int[] bountySpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 98, 22, 21, 20, 19, 18, 98, 25, 26, 27, 28, 29, 98, 30, 31, 32, 33, 34, 59 };
-		public int[] oracleSpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 28, 29, 98, 32, 33, 35, 34 };
+		public int[] oracleSpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 59, 98, 28, 29, 98, 32, 33, 34 };
 		public int[] anypercentSpriteIdOrder = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 98, 30, 31, 32, 35, 34 };
 		public int EmptyCellCount = 0;
 
@@ -225,11 +225,16 @@ namespace SotnRandoTools.RandoTracker
 			{
 				for (int i = 0; i < spriteOrder.Length; i++)
 				{
-					// Relic gating for presets (same as before)
-					if ((!grid && !tracker.relics[i].Collected) ||
-						(progression && !tracker.relics[i].Progression))
+					int spriteId = spriteOrder[i];
+
+					// Only relics 0–29 have relic gating
+					if (spriteId >= 0 && spriteId <= 29)
 					{
-						continue;
+						if ((!grid && !tracker.relics[spriteId].Collected) ||
+							(progression && !tracker.relics[spriteId].Progression))
+						{
+							continue;
+						}
 					}
 
 					switch (spriteOrder[i])
@@ -318,45 +323,44 @@ namespace SotnRandoTools.RandoTracker
 				}
 
 				// Thrust swords (single aggregated icon)
-bool swordCollected = false;
-for (int i = 0; i < tracker.thrustSwords.Length; i++)
-{
-    if (tracker.thrustSwords[i].Collected)
-    {
-        swordCollected = true;
-        break;
-    }
-}
+				bool swordCollected = false;
+				for (int i = 0; i < tracker.thrustSwords.Length; i++)
+				{
+					if (tracker.thrustSwords[i].Collected)
+					{
+						swordCollected = true;
+						break;
+					}
+				}
 
-if (grid || swordCollected)
-{
-    AddQuad(itemCount, 34); // thrust sword icon
-    itemCount++;
-}
+				if (grid || swordCollected)
+				{
+					AddQuad(itemCount, 34); // thrust sword icon
+					itemCount++;
+				}
 
-// IMPORTANT ITEMS (single aggregated icon at sprite 59)
-bool importantActive = false;
-for (int i = 0; i < tracker.importantItems.Length; i++)
-{
-    if (tracker.importantItems[i].Status)   // Status = collected OR equipped
-    {
-        importantActive = true;
-        break;
-    }
-}
+				bool importantActive = false;
+				for (int i = 0; i < tracker.importantItems.Length; i++)
+				{
+					if (tracker.importantItems[i].Collected || tracker.importantItems[i].Equipped)
+					{
+						importantActive = true;
+						break;
+					}
+				}
 
-if (grid || importantActive)
-{
-    AddQuad(itemCount, 59); // <-- ALWAYS sprite 59
-    itemCount++;
-}
+				if (grid || importantActive)
+				{
+					AddQuad(itemCount, 59);
+					itemCount++;
+				}
 
-// Align to row end after normal layout
-remainder = itemCount % columns;
-if (remainder != 0)
-{
-    itemCount += columns - remainder;
-}
+				// Align to row end after normal layout
+				remainder = itemCount % columns;
+				if (remainder != 0)
+				{
+					itemCount += columns - remainder;
+				}
 
 
 			}
@@ -370,7 +374,7 @@ if (remainder != 0)
 					itemCount += columns - remainder;
 				}
 
-				for (int i = 0; i < tracker.timeAttacks.Length; i++)
+				for (int i = 0; i < tracker.timeAttacks.Length && (35 + i) <= 58; i++)
 				{
 					if (!grid && !tracker.timeAttacks[i])
 					{
@@ -854,11 +858,32 @@ if (remainder != 0)
 			{
 				collected[34] = 0.0f;
 			}
+			bool importantActive = false;
+			for (int i = 0; i < tracker.importantItems.Length; i++)
+			{
+				if (tracker.importantItems[i].Collected || tracker.importantItems[i].Equipped)
+				{
+					importantActive = true;
+					break;
+				}
+			}
+
+			if (collected[59] == 0.0f && importantActive)
+			{
+				collected[59] = 0.1f;
+				changes = true;
+			}
+
+			if (collected[59] != 0.0f && !importantActive)
+			{
+				collected[59] = 0.0f;
+				changes = true;
+			}
 
 			// BOSSES (time attacks)
 			if (tracker.allBossesGoal)
 			{
-				for (int i = 0; i < tracker.timeAttacks.Length; i++)
+				for (int i = 0; i < tracker.timeAttacks.Length && (35 + i) <= 58; i++)
 				{
 					if (collected[35 + i] == 0.0f && tracker.timeAttacks[i])
 					{
@@ -873,28 +898,6 @@ if (remainder != 0)
 				}
 			}
 
-			// IMPORTANT ITEMS (aggregated icon at index 59)
-			bool importantActive = tracker.importantItems.Any(item => item.Status);
-
-			for (int i = 0; i < tracker.importantItems.Length; i++)
-			{
-				if (tracker.importantItems[i].Collected || tracker.importantItems[i].Equipped)
-				{
-					importantActive = true;
-					changes = true;
-					break;
-				}
-			}
-
-			if (collected[59] == 0.0f && importantActive)
-			{
-				collected[59] = 0.1f;
-			}
-
-			if (collected[59] != 0.0f && !importantActive)
-			{
-				collected[59] = 0.0f;
-			}
 
 			// ANIMATION STEP
 			for (int i = 0; i < collected.Length; i++)
