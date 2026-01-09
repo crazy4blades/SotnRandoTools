@@ -56,6 +56,7 @@ namespace SotnRandoTools
             this.saveLayoutButton = new System.Windows.Forms.Button();
             this.openLayoutDialog = new System.Windows.Forms.OpenFileDialog();
             this.saveLayoutDialog = new System.Windows.Forms.SaveFileDialog();
+			this.LibraryCardCheckbox = new System.Windows.Forms.CheckBox();
             this.relicDisplayGroup.SuspendLayout();
             this.layoutGroup.SuspendLayout();
             this.optionsGroup.SuspendLayout();
@@ -172,6 +173,7 @@ namespace SotnRandoTools
             // 
             // optionsGroup
             // 
+			this.optionsGroup.Controls.Add(this.LibraryCardCheckbox);
             this.optionsGroup.Controls.Add(this.alwaysOpTopCheckbox);
             this.optionsGroup.Controls.Add(this.stereoCheckBox);
             this.optionsGroup.Controls.Add(this.muteCheckBox);
@@ -376,6 +378,17 @@ namespace SotnRandoTools
             this.saveLayoutDialog.Filter = "layout config files|*.ini";
             this.saveLayoutDialog.FileOk += new System.ComponentModel.CancelEventHandler(this.saveLayoutDialog_FileOk);
             // 
+            // LibraryCardCheckbox
+            // 
+            this.LibraryCardCheckbox.AutoSize = true;
+            this.LibraryCardCheckbox.Location = new System.Drawing.Point(6, 180);
+            this.LibraryCardCheckbox.Name = "LibraryCardCheckbox";
+            this.LibraryCardCheckbox.Size = new System.Drawing.Size(114, 17);
+            this.LibraryCardCheckbox.TabIndex = 7;
+            this.LibraryCardCheckbox.Text = "Track Library Card";
+            this.LibraryCardCheckbox.UseVisualStyleBackColor = true;
+			this.LibraryCardCheckbox.CheckedChanged += new System.EventHandler(this.LibraryCardCheckbox_CheckedChanged);
+			//
             // AutotrackerSettingsPanel
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(96F, 96F);
@@ -440,5 +453,6 @@ namespace SotnRandoTools
 		private System.Windows.Forms.SaveFileDialog saveLayoutDialog;
 		private System.Windows.Forms.CheckBox alwaysOpTopCheckbox;
 		private System.Windows.Forms.ComboBox customExtensionCombo;
+		private System.Windows.Forms.CheckBox LibraryCardCheckbox;
 	}
 }
