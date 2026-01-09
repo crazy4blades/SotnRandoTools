@@ -73,6 +73,7 @@ Bindings over at: [https://taliczealot.github.io/coop/](https://taliczealot.gith
 
 ## Useful links
 * [SotN Randomizer](https://sotn.io)
+* [SotN Randomizer Dev Branch](https://dev.sotn.io)
 * [Latest BizHawk release](https://github.com/TASVideos/BizHawk/releases/latest)
 
 ## Contributors
