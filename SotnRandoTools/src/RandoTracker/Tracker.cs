@@ -308,6 +308,11 @@ namespace SotnRandoTools.RandoTracker
 				}
 			}
 
+			if (updatedSecondCastle != secondCastle && sotnApi.GameApi.StageId == 0x20)	// Fix for 2nd Castle Start Castle Change on Replays
+			{
+				secondCastle = updatedSecondCastle;
+			}
+
 			if (toolConfig.Tracker.EnableAutosplitter && !started && !autosplitterConnected && autosplitterReconnectCounter == AutosplitterReconnectCooldown)
 			{
 				autosplitterConnected = autosplitter.AtemptConnect();
