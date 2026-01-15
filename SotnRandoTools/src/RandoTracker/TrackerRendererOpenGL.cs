@@ -791,7 +791,7 @@ namespace SotnRandoTools.RandoTracker
 			// Spellbound group
 			if (id.Contains("spellbound") ||
 				id.Contains("anguish") ||
-				id.Contains("skill-expression"))
+				id.Contains("skill-express"))
 				return Paths.SpellboundTexture;
 
 			// Aperture group
@@ -1078,7 +1078,7 @@ namespace SotnRandoTools.RandoTracker
 
 			// Add boss rows only if enabled
 			int bossCount = tracker.allBossesGoal ? tracker.timeAttacks.Length : 0;
-			int itemCount = 1;
+			int itemCount = tracker.importantItems.Length;
 
 			// Reserve 1 row for progression/thrust sword row
 			// Reserve 1 row for Vlad Relics
