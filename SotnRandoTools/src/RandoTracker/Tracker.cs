@@ -370,7 +370,7 @@ namespace SotnRandoTools.RandoTracker
 
 			for (int i = 0; i < extension.Locations.Count; i++)
 			{
-				locationToIndex.Add(extension.Locations[i].Name, (ushort) locations.stateCount);
+				locationToIndex[extension.Locations[i].Name] = (ushort)locations.stateCount;
 				locations.AddState(new LocationState { x = (byte) extension.Locations[i].X, y = (byte) extension.Locations[i].Y, SecondCastle = extension.Locations[i].SecondCastle, SmallIndicator = extension.SmallIndicators, availabilityColor = MapColor.Available });
 
 				for (int j = 0; j < extension.Locations[i].Rooms.Count; j++)
@@ -427,10 +427,6 @@ namespace SotnRandoTools.RandoTracker
 			Preset? preset = JsonConvert.DeserializeObject<Preset>(File.ReadAllText(presetFilePath));
 			Preset? speedrunPreset = JsonConvert.DeserializeObject<Preset>(File.ReadAllText(Paths.SpeedrunPresetPath));
 
-			if (preset.Metadata.Id == "glitch")
-			{
-				LoadExtension(Paths.ExtensionPath + "equipment.json");
-			}
 
 			if (preset.RelicLocationsExtension == "false")
 			{
